@@ -1,0 +1,11 @@
+# Blood Pressure Log — v2
+# Static site, no build step. Supabase is called directly from the browser.
+
+[build]
+  publish = "."
+  command = ""
+
+[[redirects]]
+  from = "/*"
+  to = "/index-v2.html"
+  status = 200
