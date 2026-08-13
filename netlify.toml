@@ -1,4 +1,4 @@
-# Blood Pressure Log — v7
+# Blood Pressure Log — v9
 # Static site, no build step. Supabase is called directly from the browser.
 
 [build]
@@ -7,7 +7,7 @@
 
 [[redirects]]
   from = "/*"
-  to = "/index-v7.html"
+  to = "/index-v9.html"
   status = 200
 
 [[headers]]
