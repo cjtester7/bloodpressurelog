@@ -1,3 +1,9 @@
+<!-- 
+  Application: Blood Pressure Tracker
+  Version: 12
+  Filename: blood-pressure-tracker-v12.html
+  Description: Integrated with active Firebase configuration for Firestore & Auth.
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,9 +15,8 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Blood Pressure Tracker</title>
+<title>Blood Pressure Tracker v12</title>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
@@ -377,14 +382,45 @@
 <div id="toast"></div>
 <div id="printTable" style="display:none;"></div>
 
-<script>
-(() => {
-  // CONFIGURATION
-  const SUPABASE_URL = 'https://sasmlxoijullijxszcco.supabase.co';
-  const SUPABASE_ANON_KEY = 'sb_publishable_OX5llkRyIpeYc4ekWaUUDg_9t6dnEd0';
-  const TABLE = 'bp_readings';
+<script type="module">
+  // FIREBASE SDK MODULE IMPORTS
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { 
+    getAuth, 
+    signInWithEmailAndPassword, 
+    createUserWithEmailAndPassword, 
+    signOut, 
+    onAuthStateChanged 
+  } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  import { 
+    getFirestore, 
+    collection, 
+    addDoc, 
+    updateDoc, 
+    deleteDoc, 
+    doc, 
+    getDocs, 
+    query, 
+    where, 
+    orderBy 
+  } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  // FIREBASE CONFIGURATION (v12 Update)
+  const firebaseConfig = {
+    apiKey: "AIzaSyCRdJ1nc_SI1M53QpmD9vwBCxeva3Wwrkg",
+    authDomain: "blood-pressure-log-8a4b7.firebaseapp.com",
+    projectId: "blood-pressure-log-8a4b7",
+    storageBucket: "blood-pressure-log-8a4b7.firebasestorage.app",
+    messagingSenderId: "715358774416",
+    appId: "1:715358774416:web:5941ca156eaccbb74aa415",
+    measurementId: "G-GFFMGYH2X5"
+  };
+
+  // INITIALIZE FIREBASE
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const COLLECTION_NAME = 'bp_readings';
 
   // STATE MANAGEMENT
   const AppState = {
@@ -396,71 +432,67 @@
 
   const $ = (id) => document.getElementById(id);
 
-  // DATA ACCESS LAYER
+  // DATA ACCESS LAYER (FIRESTORE)
   const BPStore = {
     async fetchAll() {
-      const { data, error } = await sb
-        .from(TABLE)
-        .select('*')
-        .order('date', { ascending: false })
-        .order('time', { ascending: false });
-      if (error) throw error;
-      return data.map(row => ({
-        id: row.id,
-        date: row.date,
-        time: row.time.slice(0, 5),
-        systolic: row.systolic,
-        diastolic: row.diastolic,
-        pulse: row.pulse,
-        device: row.device || '',
-        arm: row.arm || '',
-        notes: row.notes || ''
-      }));
+      if (!AppState.currentUser) return [];
+      const q = query(
+        collection(db, COLLECTION_NAME),
+        where("user_id", "==", AppState.currentUser.uid),
+        orderBy("date", "desc"),
+        orderBy("time", "desc")
+      );
+      const querySnapshot = await getDocs(q);
+      const data = [];
+      querySnapshot.forEach((docSnap) => {
+        const row = docSnap.data();
+        data.push({
+          id: docSnap.id,
+          date: row.date,
+          time: row.time.slice(0, 5),
+          systolic: row.systolic,
+          diastolic: row.diastolic,
+          pulse: row.pulse,
+          device: row.device || '',
+          arm: row.arm || '',
+          notes: row.notes || ''
+        });
+      });
+      return data;
     },
 
     async insert(entry) {
-      const { data, error } = await sb
-        .from(TABLE)
-        .insert({
-          user_id: AppState.currentUser.id,
-          date: entry.date,
-          time: entry.time,
-          systolic: entry.systolic,
-          diastolic: entry.diastolic,
-          pulse: entry.pulse,
-          device: entry.device,
-          arm: entry.arm,
-          notes: entry.notes
-        })
-        .select()
-        .single();
-      if (error) throw error;
-      return data;
+      const docRef = await addDoc(collection(db, COLLECTION_NAME), {
+        user_id: AppState.currentUser.uid,
+        date: entry.date,
+        time: entry.time,
+        systolic: entry.systolic,
+        diastolic: entry.diastolic,
+        pulse: entry.pulse,
+        device: entry.device,
+        arm: entry.arm,
+        notes: entry.notes
+      });
+      return { id: docRef.id, ...entry };
     },
 
     async update(id, entry) {
-      const { data, error } = await sb
-        .from(TABLE)
-        .update({
-          date: entry.date,
-          time: entry.time,
-          systolic: entry.systolic,
-          diastolic: entry.diastolic,
-          pulse: entry.pulse,
-          device: entry.device,
-          arm: entry.arm,
-          notes: entry.notes
-        })
-        .eq('id', id)
-        .select()
-        .single();
-      if (error) throw error;
-      return data;
+      const docRef = doc(db, COLLECTION_NAME, id);
+      await updateDoc(docRef, {
+        date: entry.date,
+        time: entry.time,
+        systolic: entry.systolic,
+        diastolic: entry.diastolic,
+        pulse: entry.pulse,
+        device: entry.device,
+        arm: entry.arm,
+        notes: entry.notes
+      });
+      return { id, ...entry };
     },
 
     async remove(id) {
-      const { error } = await sb.from(TABLE).delete().eq('id', id);
-      if (error) throw error;
+      await deleteDoc(doc(db, COLLECTION_NAME, id));
     }
   };
 
@@ -694,18 +726,9 @@
 
       try {
         if (AppState.authMode === 'signup') {
-          const { data, error } = await sb.auth.signUp({ email, password });
-          if (error) throw error;
-          if (data.user && !data.session) {
-            authError.textContent = 'Account created — check email to confirm, then sign in.';
-            authError.style.display = 'block';
-            AppState.authMode = 'signin';
-            $('authTitle').textContent = 'Sign in';
-            $('authSubmitBtn').textContent = 'Sign In';
-          }
+          await createUserWithEmailAndPassword(auth, email, password);
         } else {
-          const { error } = await sb.auth.signInWithPassword({ email, password });
-          if (error) throw error;
+          await signInWithEmailAndPassword(auth, email, password);
         }
       } catch (err) {
         authError.textContent = err.message || 'Something went wrong. Try again.';
@@ -715,11 +738,11 @@
       }
     });
 
-    $('signOutBtn').addEventListener('click', () => sb.auth.signOut());
+    $('signOutBtn').addEventListener('click', () => signOut(auth));
 
-    sb.auth.onAuthStateChange((event, session) => {
-      if (session && session.user) {
-        AppState.currentUser = session.user;
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        AppState.currentUser = user;
         $('authScreen').style.display = 'none';
         $('appRoot').style.display = 'block';
         $('userEmail').textContent = AppState.currentUser.email;
@@ -809,7 +832,7 @@
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `blood-pressure-log-${localDateStr()}.csv`;
+      a.download = `blood-pressure-log-v12-${localDateStr()}.csv`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -846,7 +869,6 @@
   // BOOTSTRAP
   initAuth();
   initAppHandlers();
-})();
 </script>
 </body>
 </html>
