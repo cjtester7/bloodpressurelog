@@ -113,13 +113,14 @@
   .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
   .field { margin-bottom: 12px; }
   .field label { display: block; font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 5px; }
-  .field input, .field textarea {
+  .field input, .field select, .field textarea {
     width: 100%; border: 1.5px solid var(--line-strong); border-radius: 9px; padding: 10px 11px;
     font-size: 16px; font-family: 'IBM Plex Mono', monospace; color: var(--ink); background: #FBFDFC; transition: border-color .15s;
   }
+  .field select { font-family: 'Inter', sans-serif; appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%20587A75' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 10px center; background-size: 16px; }
   .field input[type="text"], .field input[type="email"], .field input[type="password"], .field textarea { font-family: 'Inter', sans-serif; }
   .field textarea { resize: vertical; min-height: 44px; }
-  .field input:focus, .field textarea:focus { outline: none; border-color: var(--teal); background: #fff; }
+  .field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--teal); background: #fff; }
 
   .btn {
     appearance: none; border: none; cursor: pointer; font-family: 'Inter', sans-serif; font-weight: 600; font-size: 14.5px;
@@ -156,6 +157,7 @@
   .entry-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
   .entry-datetime { font-size: 12.5px; color: var(--ink-soft); font-weight: 600; }
   .entry-datetime .ampm { color: var(--ink-soft); font-weight: 500; }
+  .entry-meta { font-size: 11px; color: var(--ink-soft); margin-top: 2px; font-weight: 500; }
   .entry-tag { font-size: 10.5px; font-weight: 700; letter-spacing: .03em; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
   .tag-low { background: #EBF8FF; color: #2B6CB0; }
   .tag-normal { background: #E4F3EE; color: #0F6E4F; }
@@ -306,6 +308,25 @@
             <input type="time" id="fTime" required>
           </div>
         </div>
+        <div class="grid2">
+          <div class="field">
+            <label for="fDevice">Device</label>
+            <select id="fDevice">
+              <option value="">Select Device...</option>
+              <option value="CK-W118">CK-W118</option>
+              <option value="U82RH">U82RH</option>
+              <option value="W1681">W1681</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="fArm">Arm</label>
+            <select id="fArm">
+              <option value="">Select Arm...</option>
+              <option value="Left Arm">Left Arm</option>
+              <option value="Right Arm">Right Arm</option>
+            </select>
+          </div>
+        </div>
         <div class="grid3">
           <div class="field">
             <label for="fSys">Systolic</label>
@@ -322,7 +343,7 @@
         </div>
         <div class="field">
           <label for="fNotes">Notes</label>
-          <textarea id="fNotes" placeholder="e.g. after coffee, left arm, resting..."></textarea>
+          <textarea id="fNotes" placeholder="e.g. after coffee, resting..."></textarea>
         </div>
         <button type="submit" class="btn btn-primary" id="submitBtn">Log Reading</button>
       </form>
@@ -391,6 +412,8 @@
         systolic: row.systolic,
         diastolic: row.diastolic,
         pulse: row.pulse,
+        device: row.device || '',
+        arm: row.arm || '',
         notes: row.notes || ''
       }));
     },
@@ -405,6 +428,8 @@
           systolic: entry.systolic,
           diastolic: entry.diastolic,
           pulse: entry.pulse,
+          device: entry.device,
+          arm: entry.arm,
           notes: entry.notes
         })
         .select()
@@ -422,6 +447,8 @@
           systolic: entry.systolic,
           diastolic: entry.diastolic,
           pulse: entry.pulse,
+          device: entry.device,
+          arm: entry.arm,
           notes: entry.notes
         })
         .eq('id', id)
@@ -529,9 +556,15 @@
     const cat = category(e.systolic, e.diastolic);
     div.className = `entry flag-${cat.key}`;
     const t = to12Hour(e.time);
+
+    const metaInfo = [e.device, e.arm].filter(Boolean).join(' · ');
+
     div.innerHTML = `
       <div class="entry-top">
-        <div class="entry-datetime">${formatDateDisplay(e.date)} · ${t.h12}:${t.m} <span class="ampm">${t.ampm}</span></div>
+        <div>
+          <div class="entry-datetime">${formatDateDisplay(e.date)} · ${t.h12}:${t.m} <span class="ampm">${t.ampm}</span></div>
+          ${metaInfo ? `<div class="entry-meta">${escapeHtml(metaInfo)}</div>` : ''}
+        </div>
         <div style="display:flex;align-items:center;gap:2px;">
           <span class="entry-tag tag-${cat.key}" style="margin-right:4px;">${cat.label}</span>
           <button class="entry-edit" data-id="${e.id}" aria-label="Edit reading" title="Edit">✎</button>
@@ -585,6 +618,8 @@
     AppState.editingId = e.id;
     $('fDate').value = e.date;
     $('fTime').value = e.time;
+    $('fDevice').value = e.device || '';
+    $('fArm').value = e.arm || '';
     $('fSys').value = e.systolic;
     $('fDia').value = e.diastolic;
     $('fPulse').value = e.pulse ?? '';
@@ -716,6 +751,8 @@
       const entry = {
         date: $('fDate').value,
         time: $('fTime').value,
+        device: $('fDevice').value,
+        arm: $('fArm').value,
         systolic: Number($('fSys').value),
         diastolic: Number($('fDia').value),
         pulse: $('fPulse').value ? Number($('fPulse').value) : null,
@@ -729,6 +766,7 @@
           if (idx !== -1) {
             AppState.entries[idx] = {
               id: saved.id, date: saved.date, time: saved.time.slice(0, 5),
+              device: saved.device || '', arm: saved.arm || '',
               systolic: saved.systolic, diastolic: saved.diastolic,
               pulse: saved.pulse, notes: saved.notes || ''
             };
@@ -740,6 +778,7 @@
           const saved = await BPStore.insert(entry);
           AppState.entries.push({
             id: saved.id, date: saved.date, time: saved.time.slice(0, 5),
+            device: saved.device || '', arm: saved.arm || '',
             systolic: saved.systolic, diastolic: saved.diastolic,
             pulse: saved.pulse, notes: saved.notes || ''
           });
@@ -760,10 +799,10 @@
     $('exportBtn').addEventListener('click', () => {
       if (AppState.entries.length === 0) { showToast('No readings to export'); return; }
       const sorted = [...AppState.entries].sort((a, b) => (a.date + 'T' + a.time).localeCompare(b.date + 'T' + b.time));
-      const header = ['Date', 'Time', 'AM/PM', 'Systolic', 'Diastolic', 'Pulse', 'Notes'];
+      const header = ['Date', 'Time', 'AM/PM', 'Device', 'Arm', 'Systolic', 'Diastolic', 'Pulse', 'Notes'];
       const rows = sorted.map(e => {
         const t = to12Hour(e.time);
-        return [e.date, `${t.h12}:${t.m}`, t.ampm, e.systolic, e.diastolic, e.pulse ?? '', (e.notes || '').replace(/"/g, '""')];
+        return [e.date, `${t.h12}:${t.m}`, t.ampm, e.device || '', e.arm || '', e.systolic, e.diastolic, e.pulse ?? '', (e.notes || '').replace(/"/g, '""')];
       });
       const csv = [header, ...rows].map(r => r.map(f => `"${String(f)}"`).join(',')).join('\n');
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -783,12 +822,12 @@
       const sorted = [...AppState.entries].sort((a, b) => (a.date + 'T' + a.time).localeCompare(b.date + 'T' + b.time));
       const rows = sorted.map(e => {
         const t = to12Hour(e.time);
-        return `<tr><td>${formatDateDisplay(e.date)}</td><td>${t.h12}:${t.m}</td><td>${t.ampm}</td><td>${e.systolic}</td><td>${e.diastolic}</td><td>${e.pulse ?? ''}</td><td>${escapeHtml(e.notes || '')}</td></tr>`;
+        return `<tr><td>${formatDateDisplay(e.date)}</td><td>${t.h12}:${t.m}</td><td>${t.ampm}</td><td>${escapeHtml(e.device || '')}</td><td>${escapeHtml(e.arm || '')}</td><td>${e.systolic}</td><td>${e.diastolic}</td><td>${e.pulse ?? ''}</td><td>${escapeHtml(e.notes || '')}</td></tr>`;
       }).join('');
       $('printTable').innerHTML = `
         <h2 style="font-family:Georgia,serif;">Blood Pressure Log</h2>
         <table style="width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:13px;">
-          <thead><tr>${['Date', 'Time', 'AM/PM', 'Systolic', 'Diastolic', 'Pulse', 'Notes'].map(h => `<th style="border:1px solid #333;padding:6px 8px;background:#eee;text-align:left;">${h}</th>`).join('')}</tr></thead>
+          <thead><tr>${['Date', 'Time', 'AM/PM', 'Device', 'Arm', 'Systolic', 'Diastolic', 'Pulse', 'Notes'].map(h => `<th style="border:1px solid #333;padding:6px 8px;background:#eee;text-align:left;">${h}</th>`).join('')}</tr></thead>
           <tbody>${rows}</tbody>
         </table>`;
       window.print();
