@@ -1,8 +1,8 @@
 <!-- 
   Application: Blood Pressure Tracker
-  Version: 15
-  Filename: blood-pressure-tracker-v15.html
-  Description: Added timestamp (YYYY-MM-DD-HHMM) to exported CSV filenames.
+  Version: 16
+  Filename: blood-pressure-tracker-v16.html
+  Description: Updated Email Log button to attach CSV file with timestamped filename.
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -16,7 +16,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Blood Pressure Tracker v15</title>
+<title>Blood Pressure Tracker v16</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -63,7 +63,7 @@
     position: relative;
     overflow: hidden;
   }
-  header.hero .top-row { display: flex; justify-content: space-between; align-items: flex-start; }
+  header.hero .top-row { display: flex; justify-space-between; align-items: flex-start; }
   header.hero .eyebrow {
     font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
     color: #8FC4BC; font-weight: 600; margin-bottom: 6px;
@@ -156,19 +156,9 @@
   }
   .entry:hover { box-shadow: 0 2px 8px rgba(0,0,0,.04); }
 
-  /* Device Specific Subtle Background Tints */
-  .entry.device-ck-w118 {
-    background-color: #F2F8FC;
-    border-color: #C3E2F3;
-  }
-  .entry.device-u82rh {
-    background-color: #FAF4FD;
-    border-color: #E8D3F5;
-  }
-  .entry.device-w1681 {
-    background-color: #FCF7ED;
-    border-color: #F5E5C9;
-  }
+  .entry.device-ck-w118 { background-color: #F2F8FC; border-color: #C3E2F3; }
+  .entry.device-u82rh { background-color: #FAF4FD; border-color: #E8D3F5; }
+  .entry.device-w1681 { background-color: #FCF7ED; border-color: #F5E5C9; }
 
   .entry.flag-low { border-left-color: var(--blue); }
   .entry.flag-normal { border-left-color: var(--green); }
@@ -182,12 +172,6 @@
   .entry-datetime .ampm { color: var(--ink-soft); font-weight: 500; }
   .entry-meta { font-size: 11px; color: var(--ink-soft); margin-top: 2px; font-weight: 500; }
   .entry-tag { font-size: 10.5px; font-weight: 700; letter-spacing: .03em; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
-  .tag-low { background: #EBF8FF; color: #2B6CB0; }
-  .tag-normal { background: #E4F3EE; color: #0F6E4F; }
-  .tag-elevated { background: #FBF0DC; color: #8A5B12; }
-  .tag-mixed { background: #FDE7D4; color: #A3540F; }
-  .tag-high { background: #FBE6DE; color: #A5401E; }
-  .tag-crisis { background: #F6D9D5; color: #8F1E1E; }
 
   .entry-nums { display: flex; align-items: baseline; gap: 14px; margin-top: 9px; }
   .entry-nums .num-block { display: flex; flex-direction: column; }
@@ -197,9 +181,8 @@
   .entry-nums .pulse-val { font-size: 14px; color: var(--ink-soft); margin-left: auto; font-family: 'IBM Plex Mono', monospace; align-self: center; }
 
   .entry-notes { margin-top: 8px; font-size: 13px; color: var(--ink-soft); font-style: italic; }
-  .entry-del { background: none; border: none; color: var(--ink-soft); cursor: pointer; font-size: 22px; line-height: 1; padding: 2px 6px; border-radius: 6px; }
+  .entry-del, .entry-edit { background: none; border: none; color: var(--ink-soft); cursor: pointer; font-size: 20px; line-height: 1; padding: 2px 6px; border-radius: 6px; }
   .entry-del:hover { color: #A11F1F; background: #FBEAE6; }
-  .entry-edit { background: none; border: none; color: var(--ink-soft); cursor: pointer; font-size: 20px; line-height: 1; padding: 2px 6px; border-radius: 6px; }
   .entry-edit:hover { color: var(--teal-deep); background: #E4F1EE; }
 
   .card.editing { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(15,110,102,.12); }
@@ -208,10 +191,7 @@
     background: #E4F1EE; color: var(--teal-deep); font-size: 12.5px; font-weight: 600;
     padding: 8px 12px; border-radius: 9px; margin-bottom: 14px;
   }
-  .editing-banner button {
-    background: none; border: none; color: var(--teal-deep); font-weight: 700;
-    font-size: 12.5px; cursor: pointer; text-decoration: underline;
-  }
+  .editing-banner button { background: none; border: none; color: var(--teal-deep); font-weight: 700; font-size: 12.5px; cursor: pointer; text-decoration: underline; }
 
   .empty-state { text-align: center; padding: 34px 16px; color: var(--ink-soft); }
   .empty-state .glyph { font-size: 28px; margin-bottom: 8px; opacity: .5; }
@@ -226,7 +206,6 @@
   }
   #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-  /* Auth Screen */
   #authScreen {
     min-height: 100vh; display: flex; align-items: center; justify-content: center;
     padding: calc(env(safe-area-inset-top, 0px) + 20px) 20px 20px;
@@ -239,9 +218,7 @@
   .auth-card .eyebrow { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--teal); font-weight: 700; margin-bottom: 6px; }
   .auth-card h1 { margin: 0 0 4px; font-family: 'Fraunces', serif; font-weight: 500; font-size: 24px; }
   .auth-card p.sub { margin: 0 0 20px; font-size: 13px; color: var(--ink-soft); }
-  .auth-error {
-    background: #FBE6DE; color: #A5401E; font-size: 12.5px; padding: 9px 12px; border-radius: 8px; margin-bottom: 14px; display: none;
-  }
+  .auth-error { background: #FBE6DE; color: #A5401E; font-size: 12.5px; padding: 9px 12px; border-radius: 8px; margin-bottom: 14px; display: none; }
   .auth-toggle { text-align: center; margin-top: 14px; font-size: 13px; color: var(--ink-soft); }
 
   @media (min-width: 520px) { .stat-chip .v { font-size: 20px; } }
@@ -392,9 +369,7 @@
   </main>
 
   <footer class="note">
-    Categories follow standard AHA reference ranges (Low / Normal / Elevated / Stage 1 / Stage 2 / Crisis) for quick reference — this is not medical advice. Consult a healthcare provider regarding your metrics, especially any readings in the Crisis or Low range.
-    <br><br>
-    Tip: On iPhone, tap Share in Safari → <strong>Add to Home Screen</strong> to run as a dedicated web app.
+    Categories follow standard AHA reference ranges (Low / Normal / Elevated / Stage 1 / Stage 2 / Crisis) for quick reference — this is not medical advice. Consult a healthcare provider regarding your metrics.
   </footer>
 </div>
 
@@ -402,7 +377,6 @@
 <div id="printTable" style="display:none;"></div>
 
 <script type="module">
-  // FIREBASE SDK MODULE IMPORTS
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
   import { 
     getAuth, 
@@ -424,7 +398,6 @@
     orderBy 
   } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-  // FIREBASE CONFIGURATION
   const firebaseConfig = {
     apiKey: "AIzaSyCRdJ1nc_SI1M53QpmD9vwBCxeva3Wwrkg",
     authDomain: "blood-pressure-log-8a4b7.firebaseapp.com",
@@ -435,13 +408,11 @@
     measurementId: "G-GFFMGYH2X5"
   };
 
-  // INITIALIZE FIREBASE
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
   const COLLECTION_NAME = 'bp_readings';
 
-  // STATE MANAGEMENT
   const AppState = {
     entries: [],
     currentUser: null,
@@ -451,7 +422,6 @@
 
   const $ = (id) => document.getElementById(id);
 
-  // DATA ACCESS LAYER (FIRESTORE)
   const BPStore = {
     async fetchAll() {
       if (!AppState.currentUser) return [];
@@ -515,7 +485,6 @@
     }
   };
 
-  // DOM CONTROLLERS & RENDERERS
   function showToast(msg) {
     const t = $('toast');
     t.textContent = msg;
@@ -538,6 +507,16 @@
     const hh = String(d.getHours()).padStart(2, '0');
     const min = String(d.getMinutes()).padStart(2, '0');
     return `${yyyy}-${mm}-${dd}-${hh}${min}`;
+  }
+
+  function generateCSVData() {
+    const sorted = [...AppState.entries].sort((a, b) => (a.date + 'T' + a.time).localeCompare(b.date + 'T' + b.time));
+    const header = ['Date', 'Time', 'AM/PM', 'Device', 'Arm', 'Systolic', 'Diastolic', 'Pulse', 'Notes'];
+    const rows = sorted.map(e => {
+      const t = to12Hour(e.time);
+      return [e.date, `${t.h12}:${t.m}`, t.ampm, e.device || '', e.arm || '', e.systolic, e.diastolic, e.pulse ?? '', (e.notes || '').replace(/"/g, '""')];
+    });
+    return [header, ...rows].map(r => r.map(f => `"${String(f)}"`).join(',')).join('\n');
   }
 
   function setDefaultDateTime() {
@@ -615,7 +594,6 @@
     const div = document.createElement('div');
     const cat = category(e.systolic, e.diastolic);
 
-    // Dynamic Device Background Styling
     let deviceClass = '';
     if (e.device === 'CK-W118') deviceClass = 'device-ck-w118';
     else if (e.device === 'U82RH') deviceClass = 'device-u82rh';
@@ -670,7 +648,6 @@
     renderStats(sorted);
   }
 
-  // EVENT HANDLERS & FORM LOGIC
   async function loadEntries() {
     try {
       AppState.entries = await BPStore.fetchAll();
@@ -727,7 +704,6 @@
     }
   }
 
-  // INITIALIZATION
   function initAuth() {
     const authForm = $('authForm');
     const authError = $('authError');
@@ -856,18 +832,13 @@
 
     $('exportBtn').addEventListener('click', () => {
       if (AppState.entries.length === 0) { showToast('No readings to export'); return; }
-      const sorted = [...AppState.entries].sort((a, b) => (a.date + 'T' + a.time).localeCompare(b.date + 'T' + b.time));
-      const header = ['Date', 'Time', 'AM/PM', 'Device', 'Arm', 'Systolic', 'Diastolic', 'Pulse', 'Notes'];
-      const rows = sorted.map(e => {
-        const t = to12Hour(e.time);
-        return [e.date, `${t.h12}:${t.m}`, t.ampm, e.device || '', e.arm || '', e.systolic, e.diastolic, e.pulse ?? '', (e.notes || '').replace(/"/g, '""')];
-      });
-      const csv = [header, ...rows].map(r => r.map(f => `"${String(f)}"`).join(',')).join('\n');
+      const csv = generateCSVData();
+      const filename = `blood-pressure-log-v16-${exportTimestampStr()}.csv`;
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `blood-pressure-log-v15-${exportTimestampStr()}.csv`;
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -875,36 +846,52 @@
       showToast('CSV exported');
     });
 
-    $('emailBtn').addEventListener('click', () => {
+    $('emailBtn').addEventListener('click', async () => {
       if (AppState.entries.length === 0) { showToast('No readings to email'); return; }
-      const sorted = [...AppState.entries].sort((a, b) => (b.date + 'T' + b.time).localeCompare(a.date + 'T' + a.time));
       
-      let bodyText = "Blood Pressure Log Summary\n";
-      bodyText += `Generated: ${localDateStr()}\n`;
-      bodyText += "----------------------------------------\n\n";
+      const csv = generateCSVData();
+      const filename = `blood-pressure-log-v16-${exportTimestampStr()}.csv`;
+      const file = new File([csv], filename, { type: 'text/csv' });
 
-      sorted.forEach(e => {
-        const t = to12Hour(e.time);
-        const cat = category(e.systolic, e.diastolic);
-        const details = [e.device, e.arm].filter(Boolean).join(', ');
-        
-        bodyText += `${formatDateDisplay(e.date)} at ${t.h12}:${t.m} ${t.ampm}\n`;
-        bodyText += `Reading: ${e.systolic}/${e.diastolic} mmHg (${cat.label})\n`;
-        if (e.pulse) bodyText += `Pulse: ${e.pulse} bpm\n`;
-        if (details) bodyText += `Details: ${details}\n`;
-        if (e.notes) bodyText += `Notes: ${e.notes}\n`;
-        bodyText += "\n";
-      });
+      // Check if system/browser supports sharing attached files via Web Share API
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            title: 'Blood Pressure Log',
+            text: 'Attached is my exported Blood Pressure Log CSV.',
+            files: [file]
+          });
+          showToast('Sharing dialog opened');
+          return;
+        } catch (err) {
+          if (err.name !== 'AbortError') {
+            console.warn('Web Share failed, falling back to mailto link', err);
+          } else {
+            return;
+          }
+        }
+      }
 
-      const subject = encodeURIComponent(`Blood Pressure Log - ${localDateStr()}`);
-      const body = encodeURIComponent(bodyText);
+      // Fallback for desktop browsers without Web Share file support: Trigger download and open mail client
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      const subject = encodeURIComponent(`Blood Pressure Log Attachment - ${localDateStr()}`);
+      const body = encodeURIComponent(`Please find attached the exported file: ${filename}\n\n(The file has been saved to your downloads folder so you can attach it to this email).`);
       window.location.href = `mailto:?subject=${subject}&body=${body}`;
-      showToast('Opening mail client…');
+      showToast('CSV downloaded & mail client opened');
     });
 
     $('printBtn').addEventListener('click', () => {
       if (AppState.entries.length === 0) { showToast('No readings to print'); return; }
-      const sorted = [...AppState.entries].sort((a, b) => (a.date + 'T' + a.time).localeCompare(a.date + 'T' + a.time));
+      const sorted = [...AppState.entries].sort((a, b) => (a.date + 'T' + a.time).localeCompare(b.date + 'T' + b.time));
       const rows = sorted.map(e => {
         const t = to12Hour(e.time);
         return `<tr><td>${formatDateDisplay(e.date)}</td><td>${t.h12}:${t.m}</td><td>${t.ampm}</td><td>${escapeHtml(e.device || '')}</td><td>${escapeHtml(e.arm || '')}</td><td>${e.systolic}</td><td>${e.diastolic}</td><td>${e.pulse ?? ''}</td><td>${escapeHtml(e.notes || '')}</td></tr>`;
@@ -928,7 +915,6 @@
     document.head.appendChild(style);
   }
 
-  // BOOTSTRAP
   initAuth();
   initAppHandlers();
 </script>
