@@ -1,8 +1,8 @@
 <!-- 
   Application: Blood Pressure Tracker
-  Version: 17
-  Filename: blood-pressure-tracker-v17.html
-  Description: Restored direct mailto launcher for Outlook/desktop clients with CSV auto-download fallback.
+  Version: 18
+  Filename: blood-pressure-tracker-v18.html
+  Description: Cleared email body payload in mailto link; triggers file download for easy manual attachment.
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -16,7 +16,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Blood Pressure Tracker v17</title>
+<title>Blood Pressure Tracker v18</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -841,7 +841,7 @@
 
     $('exportBtn').addEventListener('click', () => {
       if (AppState.entries.length === 0) { showToast('No readings to export'); return; }
-      const filename = `blood-pressure-log-v17-${exportTimestampStr()}.csv`;
+      const filename = `blood-pressure-log-v18-${exportTimestampStr()}.csv`;
       triggerCsvDownload(filename);
       showToast('CSV exported');
     });
@@ -849,36 +849,16 @@
     $('emailBtn').addEventListener('click', () => {
       if (AppState.entries.length === 0) { showToast('No readings to email'); return; }
       
-      const filename = `blood-pressure-log-v17-${exportTimestampStr()}.csv`;
+      const filename = `blood-pressure-log-v18-${exportTimestampStr()}.csv`;
       
-      // Automatically download the timestamped CSV file for manual attachment
+      // Save CSV directly to Downloads folder
       triggerCsvDownload(filename);
 
-      // Open Outlook / default mail app via mailto link with formatted summary
-      const sorted = [...AppState.entries].sort((a, b) => (b.date + 'T' + b.time).localeCompare(a.date + 'T' + a.time));
-      let bodyText = "Blood Pressure Log Summary\n";
-      bodyText += `Generated: ${localDateStr()}\n`;
-      bodyText += `Exported File: ${filename}\n`;
-      bodyText += "----------------------------------------\n\n";
-
-      sorted.forEach(e => {
-        const t = to12Hour(e.time);
-        const cat = category(e.systolic, e.diastolic);
-        const details = [e.device, e.arm].filter(Boolean).join(', ');
-        
-        bodyText += `${formatDateDisplay(e.date)} at ${t.h12}:${t.m} ${t.ampm}\n`;
-        bodyText += `Reading: ${e.systolic}/${e.diastolic} mmHg (${cat.label})\n`;
-        if (e.pulse) bodyText += `Pulse: ${e.pulse} bpm\n`;
-        if (details) bodyText += `Details: ${details}\n`;
-        if (e.notes) bodyText += `Notes: ${e.notes}\n`;
-        bodyText += "\n";
-      });
-
+      // Open Outlook with empty email body and subject line set
       const subject = encodeURIComponent(`Blood Pressure Log - ${localDateStr()}`);
-      const body = encodeURIComponent(bodyText);
-      window.location.href = `mailto:?subject=${subject}&body=${body}`;
+      window.location.href = `mailto:?subject=${subject}`;
       
-      showToast('Downloaded CSV & opened mail client');
+      showToast('Downloaded CSV & opened blank email in Outlook');
     });
 
     $('printBtn').addEventListener('click', () => {
