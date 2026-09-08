@@ -1,8 +1,8 @@
 <!-- 
   Application: Blood Pressure Tracker
-  Version: 18
-  Filename: blood-pressure-tracker-v18.html
-  Description: Cleared email body payload in mailto link; triggers file download for easy manual attachment.
+  Version: 19
+  Filename: blood-pressure-tracker-v19.html
+  Description: Uses Web Share API to attach CSV directly to email share sheet; appends full timestamp (YYYY-MM-DD-HHMM) to subject line.
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -16,7 +16,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Blood Pressure Tracker v18</title>
+<title>Blood Pressure Tracker v19</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -841,29 +841,44 @@
 
     $('exportBtn').addEventListener('click', () => {
       if (AppState.entries.length === 0) { showToast('No readings to export'); return; }
-      const filename = `blood-pressure-log-v18-${exportTimestampStr()}.csv`;
+      const filename = `blood-pressure-log-v19-${exportTimestampStr()}.csv`;
       triggerCsvDownload(filename);
       showToast('CSV exported');
     });
 
-    $('emailBtn').addEventListener('click', () => {
+    $('emailBtn').addEventListener('click', async () => {
       if (AppState.entries.length === 0) { showToast('No readings to email'); return; }
       
-      const filename = `blood-pressure-log-v18-${exportTimestampStr()}.csv`;
-      
-      // Save CSV directly to Downloads folder
-      triggerCsvDownload(filename);
+      const ts = exportTimestampStr();
+      const filename = `blood-pressure-log-v19-${ts}.csv`;
+      const subjectText = `Blood Pressure Log - ${ts}`;
+      const csv = generateCSVData();
+      const file = new File([csv], filename, { type: 'text/csv' });
 
-      // Open Outlook with empty email body and subject line set
-      const subject = encodeURIComponent(`Blood Pressure Log - ${localDateStr()}`);
-      window.location.href = `mailto:?subject=${subject}`;
-      
-      showToast('Downloaded CSV & opened blank email in Outlook');
+      // Attempt to share file directly using Web Share API
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            title: subjectText,
+            files: [file]
+          });
+          showToast('Share sheet opened');
+          return;
+        } catch (err) {
+          if (err.name === 'AbortError') return; // User cancelled share modal
+          console.warn('Web Share failed, falling back to download:', err);
+        }
+      }
+
+      // Fallback if browser security prevents direct attachment passing
+      triggerCsvDownload(filename);
+      window.location.href = `mailto:?subject=${encodeURIComponent(subjectText)}`;
+      showToast('Downloaded CSV & opened Outlook');
     });
 
     $('printBtn').addEventListener('click', () => {
       if (AppState.entries.length === 0) { showToast('No readings to print'); return; }
-      const sorted = [...AppState.entries].sort((a, b) => (a.date + 'T' + a.time).localeCompare(b.date + 'T' + b.time));
+      const sorted = [...AppState.entries].sort((a, b) => (a.date + 'T' + a.time).localeCompare(a.date + 'T' + a.time));
       const rows = sorted.map(e => {
         const t = to12Hour(e.time);
         return `<tr><td>${formatDateDisplay(e.date)}</td><td>${t.h12}:${t.m}</td><td>${t.ampm}</td><td>${escapeHtml(e.device || '')}</td><td>${escapeHtml(e.arm || '')}</td><td>${e.systolic}</td><td>${e.diastolic}</td><td>${e.pulse ?? ''}</td><td>${escapeHtml(e.notes || '')}</td></tr>`;
