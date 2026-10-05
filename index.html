@@ -227,7 +227,7 @@
 
 <div id="authScreen">
   <div class="auth-card">
-    <div class="eyebrow">Personal Health Log</div>
+    <div class="eyebrow">Personal Health Log v19</div>
     <h1 id="authTitle">Sign in</h1>
     <p class="sub" id="authSub">Your readings, synced and private to your account.</p>
     <div class="auth-error" id="authError"></div>
@@ -253,7 +253,7 @@
   <header class="hero">
     <div class="top-row">
       <div>
-        <div class="eyebrow">Personal Health Log</div>
+        <div class="eyebrow">Personal Health Log v19</div>
         <h1>Blood Pressure</h1>
         <p class="sub" id="subline">Signed in as <span id="userEmail"></span></p>
       </div>
@@ -557,8 +557,7 @@
   function renderStats(sorted) {
     if (sorted.length === 0) {
       $('statLatest').innerHTML = '— <span class="unit">mmHg</span>';
-      $('statLatestTag').style.display = 'none';
-      $('statAvg').textContent = '—';
+      $('statLatestTag').style.display = 'none';$('statAvg').textContent = '—';
       return;
     }
     const latest = sorted[0];
@@ -659,26 +658,21 @@
     $('fDate').value = e.date;
     $('fTime').value = e.time;
     $('fDevice').value = e.device || '';
-    $('fArm').value = e.arm || '';
-    $('fSys').value = e.systolic;
+    $('fArm').value = e.arm \vert{}\vert{} '';$('fSys').value = e.systolic;
     $('fDia').value = e.diastolic;
     $('fPulse').value = e.pulse ?? '';
     $('fNotes').value = e.notes || '';
 
     $('formTitle').textContent = 'Edit Reading';
-    $('submitBtn').textContent = 'Save Changes';
-    $('editingBanner').style.display = 'flex';
-    $('formCard').classList.add('editing');
-    $('formCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    $('submitBtn').textContent = 'Save Changes';$('editingBanner').style.display = 'flex';
+    $('formCard').classList.add('editing');$('formCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   function exitEditMode() {
     AppState.editingId = null;
     $('formTitle').textContent = 'New Reading';
-    $('submitBtn').textContent = 'Log Reading';
-    $('editingBanner').style.display = 'none';
-    $('formCard').classList.remove('editing');
-    $('entryForm').reset();
+    $('submitBtn').textContent = 'Log Reading';$('editingBanner').style.display = 'none';
+    $('formCard').classList.remove('editing');$('entryForm').reset();
     setDefaultDateTime();
   }
 
@@ -709,16 +703,12 @@
       AppState.authMode = AppState.authMode === 'signin' ? 'signup' : 'signin';
       authError.style.display = 'none';
       if (AppState.authMode === 'signup') {
-        $('authTitle').textContent = 'Create account';
-        $('authSub').textContent = 'One account, your readings only.';
-        $('authSubmitBtn').textContent = 'Create Account';
-        $('authToggleText').textContent = 'Already have an account?';
+        $('authTitle').textContent = 'Create account';$('authSub').textContent = 'One account, your readings only.';
+        $('authSubmitBtn').textContent = 'Create Account';$('authToggleText').textContent = 'Already have an account?';
         authToggleBtn.textContent = 'Sign in';
       } else {
-        $('authTitle').textContent = 'Sign in';
-        $('authSub').textContent = 'Your readings, synced and private to your account.';
-        $('authSubmitBtn').textContent = 'Sign In';
-        $('authToggleText').textContent = "Don't have an account?";
+        $('authTitle').textContent = 'Sign in';$('authSub').textContent = 'Your readings, synced and private to your account.';
+        $('authSubmitBtn').textContent = 'Sign In';$('authToggleText').textContent = "Don't have an account?";
         authToggleBtn.textContent = 'Create one';
       }
     });
@@ -751,13 +741,11 @@
       if (user) {
         AppState.currentUser = user;
         $('authScreen').style.display = 'none';
-        $('appRoot').style.display = 'block';
-        $('userEmail').textContent = AppState.currentUser.email;
+        $('appRoot').style.display = 'block';$('userEmail').textContent = AppState.currentUser.email;
         loadEntries();
       } else {
         AppState.currentUser = null;
-        $('appRoot').style.display = 'none';
-        $('authScreen').style.display = 'flex';
+        $('appRoot').style.display = 'none';$('authScreen').style.display = 'flex';
       }
     });
   }
@@ -780,8 +768,7 @@
 
     $('cancelEditBtn').addEventListener('click', exitEditMode);
 
-    $('refreshBtn').addEventListener('click', () => {
-      $('refreshBtn').classList.add('spinning');
+    $('refreshBtn').addEventListener('click', () => {$('refreshBtn').classList.add('spinning');
       window.location.href = window.location.pathname + '?t=' + Date.now();
     });
 
