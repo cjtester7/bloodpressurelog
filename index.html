@@ -1,8 +1,8 @@
 <!-- 
   Application: Blood Pressure Tracker
-  Version: 19
-  Filename: blood-pressure-tracker-v19.html
-  Description: Uses Web Share API to attach CSV directly to email share sheet; appends full timestamp (YYYY-MM-DD-HHMM) to subject line.
+  Version: 20
+  Filename: blood-pressure-log-v20.html
+  Description: Added entry selection checkboxes, PDF export template matching paper form layout, and CSV data integration.
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -16,7 +16,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Blood Pressure Tracker v19</title>
+<title>Blood Pressure Tracker v20</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -140,12 +140,47 @@
   .btn-ghost:hover { border-color: var(--teal); }
   .btn-link { background: none; border: none; color: var(--teal); font-weight: 600; font-size: 13px; cursor: pointer; padding: 4px 0; }
 
-  .actions-row { display: flex; gap: 8px; margin-bottom: 6px; }
-  .actions-row .btn { flex: 1; font-size: 13px; padding: 9px 8px; }
+  .actions-row { display: flex; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
+  .actions-row .btn { flex: 1; font-size: 13px; padding: 9px 8px; min-width: 100px; }
 
   .section-head { display: flex; align-items: baseline; justify-content: space-between; margin: 22px 2px 10px; }
   .section-head h3 { font-family: 'Fraunces', serif; font-weight: 500; font-size: 16px; margin: 0; }
   .section-head .count { font-size: 12px; color: var(--ink-soft); }
+
+  .history-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 0 4px;
+  }
+  .select-all-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .select-all-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--teal);
+    cursor: pointer;
+  }
+
+  .entry-select {
+    display: flex;
+    align-items: center;
+    margin-right: 10px;
+  }
+  .entry-select input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--teal);
+    cursor: pointer;
+  }
 
   .entry {
     background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--teal);
@@ -219,6 +254,53 @@
   .auth-error { background: #FBE6DE; color: #A5401E; font-size: 12.5px; padding: 9px 12px; border-radius: 8px; margin-bottom: 14px; display: none; }
   .auth-toggle { text-align: center; margin-top: 14px; font-size: 13px; color: var(--ink-soft); }
 
+  /* Exact Paper Form Match for Print / PDF Export */
+  #pdfTemplate { display: none; }
+
+  @media print {
+    #authScreen, header.hero, .card, .actions-row, .section-head, #entryList, .empty-state, footer.note, #toast {
+      display: none !important;
+    }
+    #pdfTemplate {
+      display: block !important;
+      width: 100%;
+      font-family: 'Inter', Arial, sans-serif;
+      color: #000;
+      background: #fff;
+      padding: 10px;
+    }
+    #pdfTemplate h2 {
+      text-align: center;
+      font-family: 'Fraunces', Georgia, serif;
+      font-size: 22px;
+      margin-bottom: 16px;
+      font-weight: 500;
+    }
+    #pdfTemplate table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+    #pdfTemplate th, #pdfTemplate td {
+      border: 1px solid #111;
+      padding: 7px 5px;
+      font-size: 12px;
+      text-align: center;
+      overflow: hidden;
+    }
+    #pdfTemplate th {
+      background: #f4f4f4;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.05em;
+    }
+    #pdfTemplate td.notes-col {
+      text-align: left;
+      font-style: italic;
+    }
+  }
+
   @media (min-width: 520px) { .stat-chip .v { font-size: 20px; } }
   #appRoot { display: none; }
 </style>
@@ -227,7 +309,7 @@
 
 <div id="authScreen">
   <div class="auth-card">
-    <div class="eyebrow">Personal Health Log</div>
+    <div class="eyebrow">Personal Health Log v20</div>
     <h1 id="authTitle">Sign in</h1>
     <p class="sub" id="authSub">Your readings, synced and private to your account.</p>
     <div class="auth-error" id="authError"></div>
@@ -253,7 +335,7 @@
   <header class="hero">
     <div class="top-row">
       <div>
-        <div class="eyebrow">Personal Health Log</div>
+        <div class="eyebrow">Personal Health Log v20</div>
         <h1>Blood Pressure</h1>
         <p class="sub" id="subline">Signed in as <span id="userEmail"></span></p>
       </div>
@@ -348,6 +430,7 @@
     <div class="actions-row">
       <button class="btn btn-ghost" id="exportBtn">⬇ Export CSV</button>
       <button class="btn btn-ghost" id="emailBtn">✉ Email Log</button>
+      <button class="btn btn-ghost" id="pdfBtn">📄 Export PDF</button>
       <button class="btn btn-ghost" id="printBtn">🖨 Print Log</button>
     </div>
 
@@ -371,6 +454,7 @@
 
 <div id="toast"></div>
 <div id="printTable" style="display:none;"></div>
+<div id="pdfTemplate" style="display:none;"></div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -413,7 +497,8 @@
     entries: [],
     currentUser: null,
     authMode: 'signin',
-    editingId: null
+    editingId: null,
+    selectedIds: new Set()
   };
 
   const $ = (id) => document.getElementById(id);
@@ -597,14 +682,19 @@
 
     div.className = `entry flag-${cat.key} ${deviceClass}`;
     const t = to12Hour(e.time);
-
+    const isSelected = AppState.selectedIds.has(e.id);
     const metaInfo = [e.device, e.arm].filter(Boolean).join(' · ');
 
     div.innerHTML = `
       <div class="entry-top">
-        <div>
-          <div class="entry-datetime">${formatDateDisplay(e.date)} · ${t.h12}:${t.m} <span class="ampm">${t.ampm}</span></div>
-          ${metaInfo ? `<div class="entry-meta">${escapeHtml(metaInfo)}</div>` : ''}
+        <div style="display:flex; align-items:flex-start;">
+          <div class="entry-select">
+            <input type="checkbox" data-id="${e.id}" ${isSelected ? 'checked' : ''} aria-label="Select entry">
+          </div>
+          <div>
+            <div class="entry-datetime">${formatDateDisplay(e.date)} · ${t.h12}:${t.m} <span class="ampm">${t.ampm}</span></div>
+            ${metaInfo ? `<div class="entry-meta">${escapeHtml(metaInfo)}</div>` : ''}
+          </div>
         </div>
         <div style="display:flex;align-items:center;gap:2px;">
           <span class="entry-tag tag-${cat.key}" style="margin-right:4px;">${cat.label}</span>
@@ -621,6 +711,16 @@
       ${e.notes ? `<div class="entry-notes">"${escapeHtml(e.notes)}"</div>` : ''}
     `;
 
+    div.querySelector('input[type="checkbox"]').addEventListener('change', (ev) => {
+      if (ev.target.checked) {
+        AppState.selectedIds.add(e.id);
+      } else {
+        AppState.selectedIds.delete(e.id);
+      }
+      const selectAllBox = document.querySelector('#selectAllCheckbox');
+      if (selectAllBox) selectAllBox.checked = AppState.selectedIds.size === AppState.entries.length && AppState.entries.length > 0;
+    });
+
     div.querySelector('.entry-edit').addEventListener('click', () => beginEdit(e.id));
     div.querySelector('.entry-del').addEventListener('click', () => deleteEntry(e.id));
     return div;
@@ -636,6 +736,25 @@
       emptyState.style.display = 'block';
     } else {
       emptyState.style.display = 'none';
+
+      const toolbar = document.createElement('div');
+      toolbar.className = 'history-toolbar';
+      toolbar.innerHTML = `
+        <label class="select-all-label">
+          <input type="checkbox" id="selectAllCheckbox" ${AppState.selectedIds.size === sorted.length && sorted.length > 0 ? 'checked' : ''}>
+          Select All (${AppState.selectedIds.size} of ${sorted.length} selected)
+        </label>
+      `;
+      toolbar.querySelector('#selectAllCheckbox').addEventListener('change', (e) => {
+        if (e.target.checked) {
+          sorted.forEach(item => AppState.selectedIds.add(item.id));
+        } else {
+          AppState.selectedIds.clear();
+        }
+        render();
+      });
+      list.appendChild(toolbar);
+
       sorted.forEach(e => list.appendChild(renderEntry(e)));
     }
 
@@ -647,6 +766,8 @@
   async function loadEntries() {
     try {
       AppState.entries = await BPStore.fetchAll();
+      // Default select all newly loaded entries
+      AppState.entries.forEach(e => AppState.selectedIds.add(e.id));
       render();
     } catch (err) {
       showToast('Could not load readings');
@@ -691,6 +812,7 @@
     try {
       await BPStore.remove(id);
       AppState.entries = AppState.entries.filter(e => e.id !== id);
+      AppState.selectedIds.delete(id);
       if (AppState.editingId === id) exitEditMode();
       render();
       showToast('Reading deleted');
@@ -819,12 +941,14 @@
           showToast('Reading updated');
         } else {
           const saved = await BPStore.insert(entry);
-          AppState.entries.push({
+          const newEntry = {
             id: saved.id, date: saved.date, time: saved.time.slice(0, 5),
             device: saved.device || '', arm: saved.arm || '',
             systolic: saved.systolic, diastolic: saved.diastolic,
             pulse: saved.pulse, notes: saved.notes || ''
-          });
+          };
+          AppState.entries.push(newEntry);
+          AppState.selectedIds.add(newEntry.id);
           render();
           $('entryForm').reset();
           setDefaultDateTime();
@@ -841,7 +965,7 @@
 
     $('exportBtn').addEventListener('click', () => {
       if (AppState.entries.length === 0) { showToast('No readings to export'); return; }
-      const filename = `blood-pressure-log-v19-${exportTimestampStr()}.csv`;
+      const filename = `blood-pressure-log-v20-${exportTimestampStr()}.csv`;
       triggerCsvDownload(filename);
       showToast('CSV exported');
     });
@@ -850,12 +974,11 @@
       if (AppState.entries.length === 0) { showToast('No readings to email'); return; }
       
       const ts = exportTimestampStr();
-      const filename = `blood-pressure-log-v19-${ts}.csv`;
+      const filename = `blood-pressure-log-v20-${ts}.csv`;
       const subjectText = `Blood Pressure Log - ${ts}`;
       const csv = generateCSVData();
       const file = new File([csv], filename, { type: 'text/csv' });
 
-      // Attempt to share file directly using Web Share API
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         try {
           await navigator.share({
@@ -865,20 +988,85 @@
           showToast('Share sheet opened');
           return;
         } catch (err) {
-          if (err.name === 'AbortError') return; // User cancelled share modal
+          if (err.name === 'AbortError') return;
           console.warn('Web Share failed, falling back to download:', err);
         }
       }
 
-      // Fallback if browser security prevents direct attachment passing
       triggerCsvDownload(filename);
       window.location.href = `mailto:?subject=${encodeURIComponent(subjectText)}`;
       showToast('Downloaded CSV & opened Outlook');
     });
 
+    // PDF / Paper Form Export Handler
+    $('pdfBtn').addEventListener('click', () => {
+      if (AppState.selectedIds.size === 0) {
+        showToast('Please select at least one reading to export');
+        return;
+      }
+
+      const selectedEntries = AppState.entries.filter(e => AppState.selectedIds.has(e.id));
+      selectedEntries.sort((a, b) => (a.date + 'T' + a.time).localeCompare(b.date + 'T' + b.time));
+
+      let rowsHtml = '';
+      selectedEntries.forEach(e => {
+        const t = to12Hour(e.time);
+        rowsHtml += `
+          <tr>
+            <td>${escapeHtml(e.date)}</td>
+            <td>${t.h12}:${t.m}</td>
+            <td>${t.ampm}</td>
+            <td>${e.systolic}</td>
+            <td>${e.diastolic}</td>
+            <td>${e.pulse ?? ''}</td>
+            <td class="notes-col">${escapeHtml(e.notes || '')}</td>
+          </tr>
+        `;
+      });
+
+      // Pad remaining rows to match the paper form grid layout appearance (e.g. 25 rows total)
+      const targetRowCount = Math.max(25, selectedEntries.length);
+      for (let i = selectedEntries.length; i < targetRowCount; i++) {
+        rowsHtml += `
+          <tr>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>AM / PM</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+          </tr>
+        `;
+      }
+
+      $('pdfTemplate').innerHTML = `
+        <h2>Blood Pressure Log</h2>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 15%;">Date</th>
+              <th style="width: 11%;">Time</th>
+              <th style="width: 12%;">AM / PM</th>
+              <th style="width: 11%;">Systolic</th>
+              <th style="width: 11%;">Diastolic</th>
+              <th style="width: 10%;">Pulse</th>
+              <th style="width: 30%;">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rowsHtml}
+          </tbody>
+        </table>
+      `;
+
+      window.print();
+      showToast('Preparing PDF export...');
+    });
+
     $('printBtn').addEventListener('click', () => {
       if (AppState.entries.length === 0) { showToast('No readings to print'); return; }
-      const sorted = [...AppState.entries].sort((a, b) => (a.date + 'T' + a.time).localeCompare(a.date + 'T' + a.time));
+      const sorted = [...AppState.entries].sort((a, b) => (a.date + 'T' + a.time).localeCompare(b.date + 'T' + b.time));
       const rows = sorted.map(e => {
         const t = to12Hour(e.time);
         return `<tr><td>${formatDateDisplay(e.date)}</td><td>${t.h12}:${t.m}</td><td>${t.ampm}</td><td>${escapeHtml(e.device || '')}</td><td>${escapeHtml(e.arm || '')}</td><td>${e.systolic}</td><td>${e.diastolic}</td><td>${e.pulse ?? ''}</td><td>${escapeHtml(e.notes || '')}</td></tr>`;
