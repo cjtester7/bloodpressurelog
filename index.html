@@ -1,8 +1,8 @@
 <!-- 
   Application: Blood Pressure Tracker
-  Version: 20
-  Filename: blood-pressure-log-v20.html
-  Description: Added entry selection checkboxes, PDF export template matching paper form layout, and CSV data integration.
+  Version: 21
+  Filename: blood-pressure-log-v21.html
+  Description: Added a Device report filter dropdown to filter logs and exports by device.
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -16,7 +16,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Blood Pressure Tracker v20</title>
+<title>Blood Pressure Tracker v21</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -147,6 +147,40 @@
   .section-head h3 { font-family: 'Fraunces', serif; font-weight: 500; font-size: 16px; margin: 0; }
   .section-head .count { font-size: 12px; color: var(--ink-soft); }
 
+  /* Filter Toolbar Styling */
+  .filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    padding: 10px 14px;
+    border-radius: 10px;
+  }
+  .filter-bar label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--ink-soft);
+    white-space: nowrap;
+  }
+  .filter-bar select {
+    flex: 1;
+    border: 1.5px solid var(--line-strong);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 13.5px;
+    font-family: 'Inter', sans-serif;
+    color: var(--ink);
+    background: #FBFDFC;
+  }
+  .filter-bar select:focus {
+    outline: none;
+    border-color: var(--teal);
+  }
+
   .history-toolbar {
     display: flex;
     justify-content: space-between;
@@ -258,7 +292,7 @@
   #pdfTemplate { display: none; }
 
   @media print {
-    #authScreen, header.hero, .card, .actions-row, .section-head, #entryList, .empty-state, footer.note, #toast {
+    #authScreen, header.hero, .card, .actions-row, .section-head, .filter-bar, #entryList, .empty-state, footer.note, #toast {
       display: none !important;
     }
     #pdfTemplate {
@@ -309,7 +343,7 @@
 
 <div id="authScreen">
   <div class="auth-card">
-    <div class="eyebrow">Personal Health Log v20</div>
+    <div class="eyebrow">Personal Health Log v21</div>
     <h1 id="authTitle">Sign in</h1>
     <p class="sub" id="authSub">Your readings, synced and private to your account.</p>
     <div class="auth-error" id="authError"></div>
@@ -335,7 +369,7 @@
   <header class="hero">
     <div class="top-row">
       <div>
-        <div class="eyebrow">Personal Health Log v20</div>
+        <div class="eyebrow">Personal Health Log v21</div>
         <h1>Blood Pressure</h1>
         <p class="sub" id="subline">Signed in as <span id="userEmail"></span></p>
       </div>
@@ -434,6 +468,17 @@
       <button class="btn btn-ghost" id="printBtn">🖨 Print Log</button>
     </div>
 
+    <!-- Device Report Filter Dropdown -->
+    <div class="filter-bar">
+      <label for="deviceFilter">Report Filter:</label>
+      <select id="deviceFilter">
+        <option value="ALL">All Devices</option>
+        <option value="CK-W118">CK-W118</option>
+        <option value="U82RH">U82RH</option>
+        <option value="W1681">W1681</option>
+      </select>
+    </div>
+
     <div class="section-head">
       <h3>History</h3>
       <span class="count" id="historyCount">0 readings</span>
@@ -443,7 +488,7 @@
 
     <div class="empty-state" id="emptyState" style="display:none;">
       <div class="glyph">♡</div>
-      <p>No readings yet — log your first one above.</p>
+      <p>No readings match this device filter.</p>
     </div>
   </main>
 
@@ -498,7 +543,8 @@
     currentUser: null,
     authMode: 'signin',
     editingId: null,
-    selectedIds: new Set()
+    selectedIds: new Set(),
+    deviceFilter: 'ALL'
   };
 
   const $ = (id) => document.getElementById(id);
@@ -590,8 +636,16 @@
     return `${yyyy}-${mm}-${dd}-${hh}${min}`;
   }
 
+  function getFilteredEntries() {
+    if (AppState.deviceFilter === 'ALL') {
+      return AppState.entries;
+    }
+    return AppState.entries.filter(e => e.device === AppState.deviceFilter);
+  }
+
   function generateCSVData() {
-    const sorted = [...AppState.entries].sort((a, b) => (a.date + 'T' + a.time).localeCompare(b.date + 'T' + b.time));
+    const filtered = getFilteredEntries();
+    const sorted = [...filtered].sort((a, b) => (a.date + 'T' + a.time).localeCompare(b.date + 'T' + b.time));
     const header = ['Date', 'Time', 'AM/PM', 'Device', 'Arm', 'Systolic', 'Diastolic', 'Pulse', 'Notes'];
     const rows = sorted.map(e => {
       const t = to12Hour(e.time);
@@ -717,8 +771,13 @@
       } else {
         AppState.selectedIds.delete(e.id);
       }
+      const filtered = getFilteredEntries();
       const selectAllBox = document.querySelector('#selectAllCheckbox');
-      if (selectAllBox) selectAllBox.checked = AppState.selectedIds.size === AppState.entries.length && AppState.entries.length > 0;
+      if (selectAllBox) {
+        const allFilteredSelected = filtered.every(item => AppState.selectedIds.has(item.id));
+        selectAllBox.checked = allFilteredSelected && filtered.length > 0;
+        selectAllBox.parentElement.innerHTML = `<input type="checkbox" id="selectAllCheckbox" ${selectAllBox.checked ? 'checked' : ''}> Select All (${filtered.filter(i => AppState.selectedIds.has(i.id)).length} of ${filtered.length} selected)`;
+      }
     });
 
     div.querySelector('.entry-edit').addEventListener('click', () => beginEdit(e.id));
@@ -729,7 +788,8 @@
   function render() {
     const list = $('entryList');
     const emptyState = $('emptyState');
-    const sorted = [...AppState.entries].sort((a, b) => (b.date + 'T' + b.time).localeCompare(a.date + 'T' + a.time));
+    const filtered = getFilteredEntries();
+    const sorted = [...filtered].sort((a, b) => (b.date + 'T' + b.time).localeCompare(a.date + 'T' + a.time));
 
     list.innerHTML = '';
     if (sorted.length === 0) {
@@ -739,17 +799,20 @@
 
       const toolbar = document.createElement('div');
       toolbar.className = 'history-toolbar';
+      const allSelected = sorted.length > 0 && sorted.every(item => AppState.selectedIds.has(item.id));
+      const selectedCount = sorted.filter(item => AppState.selectedIds.has(item.id)).length;
+
       toolbar.innerHTML = `
         <label class="select-all-label">
-          <input type="checkbox" id="selectAllCheckbox" ${AppState.selectedIds.size === sorted.length && sorted.length > 0 ? 'checked' : ''}>
-          Select All (${AppState.selectedIds.size} of ${sorted.length} selected)
+          <input type="checkbox" id="selectAllCheckbox" ${allSelected ? 'checked' : ''}>
+          Select All (${selectedCount} of ${sorted.length} selected)
         </label>
       `;
       toolbar.querySelector('#selectAllCheckbox').addEventListener('change', (e) => {
         if (e.target.checked) {
           sorted.forEach(item => AppState.selectedIds.add(item.id));
         } else {
-          AppState.selectedIds.clear();
+          sorted.forEach(item => AppState.selectedIds.delete(item.id));
         }
         render();
       });
@@ -758,7 +821,7 @@
       sorted.forEach(e => list.appendChild(renderEntry(e)));
     }
 
-    $('historyCount').textContent = `${AppState.entries.length} reading${AppState.entries.length === 1 ? '' : 's'}`;
+    $('historyCount').textContent = `${filtered.length} reading${filtered.length === 1 ? '' : 's'}`;
     $('statCount').textContent = AppState.entries.length;
     renderStats(sorted);
   }
@@ -766,7 +829,6 @@
   async function loadEntries() {
     try {
       AppState.entries = await BPStore.fetchAll();
-      // Default select all newly loaded entries
       AppState.entries.forEach(e => AppState.selectedIds.add(e.id));
       render();
     } catch (err) {
@@ -907,6 +969,12 @@
       window.location.href = window.location.pathname + '?t=' + Date.now();
     });
 
+    // Device Filter Dropdown Event Listener
+    $('deviceFilter').addEventListener('change', (e) => {
+      AppState.deviceFilter = e.target.value;
+      render();
+    });
+
     $('entryForm').addEventListener('submit', async (ev) => {
       ev.preventDefault();
       const submitBtn = $('submitBtn');
@@ -964,18 +1032,22 @@
     });
 
     $('exportBtn').addEventListener('click', () => {
-      if (AppState.entries.length === 0) { showToast('No readings to export'); return; }
-      const filename = `blood-pressure-log-v20-${exportTimestampStr()}.csv`;
+      const filtered = getFilteredEntries();
+      if (filtered.length === 0) { showToast('No readings match filter to export'); return; }
+      const suffix = AppState.deviceFilter === 'ALL' ? 'all-devices' : AppState.deviceFilter.toLowerCase();
+      const filename = `blood-pressure-log-${suffix}-${exportTimestampStr()}.csv`;
       triggerCsvDownload(filename);
       showToast('CSV exported');
     });
 
     $('emailBtn').addEventListener('click', async () => {
-      if (AppState.entries.length === 0) { showToast('No readings to email'); return; }
+      const filtered = getFilteredEntries();
+      if (filtered.length === 0) { showToast('No readings match filter to email'); return; }
       
       const ts = exportTimestampStr();
-      const filename = `blood-pressure-log-v20-${ts}.csv`;
-      const subjectText = `Blood Pressure Log - ${ts}`;
+      const suffix = AppState.deviceFilter === 'ALL' ? 'all-devices' : AppState.deviceFilter.toLowerCase();
+      const filename = `blood-pressure-log-${suffix}-${ts}.csv`;
+      const subjectText = `Blood Pressure Log (${AppState.deviceFilter}) - ${ts}`;
       const csv = generateCSVData();
       const file = new File([csv], filename, { type: 'text/csv' });
 
@@ -998,14 +1070,14 @@
       showToast('Downloaded CSV & opened Outlook');
     });
 
-    // PDF / Paper Form Export Handler
+    // PDF / Paper Form Export Handler (Respects Device Filter & Checkbox Selections)
     $('pdfBtn').addEventListener('click', () => {
-      if (AppState.selectedIds.size === 0) {
-        showToast('Please select at least one reading to export');
+      const selectedEntries = AppState.entries.filter(e => AppState.selectedIds.has(e.id) && (AppState.deviceFilter === 'ALL' || e.device === AppState.deviceFilter));
+      if (selectedEntries.length === 0) {
+        showToast('Please select at least one reading matching the device filter');
         return;
       }
 
-      const selectedEntries = AppState.entries.filter(e => AppState.selectedIds.has(e.id));
       selectedEntries.sort((a, b) => (a.date + 'T' + a.time).localeCompare(b.date + 'T' + b.time));
 
       let rowsHtml = '';
@@ -1024,7 +1096,6 @@
         `;
       });
 
-      // Pad remaining rows to match the paper form grid layout appearance (e.g. 25 rows total)
       const targetRowCount = Math.max(25, selectedEntries.length);
       for (let i = selectedEntries.length; i < targetRowCount; i++) {
         rowsHtml += `
@@ -1040,8 +1111,9 @@
         `;
       }
 
+      const deviceTitle = AppState.deviceFilter === 'ALL' ? 'All Devices' : AppState.deviceFilter;
       $('pdfTemplate').innerHTML = `
-        <h2>Blood Pressure Log</h2>
+        <h2>Blood Pressure Log — ${escapeHtml(deviceTitle)}</h2>
         <table>
           <thead>
             <tr>
@@ -1065,14 +1137,15 @@
     });
 
     $('printBtn').addEventListener('click', () => {
-      if (AppState.entries.length === 0) { showToast('No readings to print'); return; }
-      const sorted = [...AppState.entries].sort((a, b) => (a.date + 'T' + a.time).localeCompare(b.date + 'T' + b.time));
+      const filtered = getFilteredEntries();
+      if (filtered.length === 0) { showToast('No readings to print'); return; }
+      const sorted = [...filtered].sort((a, b) => (a.date + 'T' + a.time).localeCompare(b.date + 'T' + b.time));
       const rows = sorted.map(e => {
         const t = to12Hour(e.time);
         return `<tr><td>${formatDateDisplay(e.date)}</td><td>${t.h12}:${t.m}</td><td>${t.ampm}</td><td>${escapeHtml(e.device || '')}</td><td>${escapeHtml(e.arm || '')}</td><td>${e.systolic}</td><td>${e.diastolic}</td><td>${e.pulse ?? ''}</td><td>${escapeHtml(e.notes || '')}</td></tr>`;
       }).join('');
       $('printTable').innerHTML = `
-        <h2 style="font-family:Georgia,serif;">Blood Pressure Log</h2>
+        <h2 style="font-family:Georgia,serif;">Blood Pressure Log (${AppState.deviceFilter})</h2>
         <table style="width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:13px;">
           <thead><tr>${['Date', 'Time', 'AM/PM', 'Device', 'Arm', 'Systolic', 'Diastolic', 'Pulse', 'Notes'].map(h => `<th style="border:1px solid #333;padding:6px 8px;background:#eee;text-align:left;">${h}</th>`).join('')}</tr></thead>
           <tbody>${rows}</tbody>
@@ -1083,7 +1156,7 @@
     const style = document.createElement('style');
     style.textContent = `
       @media print {
-        #authScreen, header.hero, .card, .actions-row, .section-head, #entryList, .empty-state, footer.note, #toast { display:none !important; }
+        #authScreen, header.hero, .card, .actions-row, .section-head, .filter-bar, #entryList, .empty-state, footer.note, #toast { display:none !important; }
         #printTable { display:block !important; }
       }
     `;
